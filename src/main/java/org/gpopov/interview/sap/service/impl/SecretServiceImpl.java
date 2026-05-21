@@ -4,7 +4,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 
 import org.gpopov.interview.sap.dto.Secret;
-import org.gpopov.interview.sap.dto.ValidationRequest;
 import org.gpopov.interview.sap.dto.ValidationResponse;
 import org.gpopov.interview.sap.model.SecretEntity;
 import org.gpopov.interview.sap.repository.SecretRepo;

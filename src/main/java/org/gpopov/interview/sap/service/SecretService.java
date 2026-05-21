@@ -1,7 +1,6 @@
 package org.gpopov.interview.sap.service;
 
 import org.gpopov.interview.sap.dto.Secret;
-import org.gpopov.interview.sap.dto.ValidationRequest;
 import org.gpopov.interview.sap.dto.ValidationResponse;
 
 import java.util.List;

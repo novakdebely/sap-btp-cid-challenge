@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.Secret;
-import org.gpopov.interview.sap.dto.ValidationRequest;
 import org.gpopov.interview.sap.dto.ValidationResponse;
 import org.gpopov.interview.sap.service.impl.SecretServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
