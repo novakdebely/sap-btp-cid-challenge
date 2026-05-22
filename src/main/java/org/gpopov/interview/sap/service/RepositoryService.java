@@ -1,6 +1,8 @@
 package org.gpopov.interview.sap.service;
 
 import org.gpopov.interview.sap.dto.Repository;
+import org.gpopov.interview.sap.dto.RepositoryDetails;
+import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.model.RepositoryEntity;
 
 import java.util.List;
@@ -27,7 +29,7 @@ public interface RepositoryService {
      * @param id
      * @return
      */
-    public Repository findById(UUID id);
+    public RepositoryDetails findById(UUID id);
     
     /**
      * 
@@ -37,7 +39,21 @@ public interface RepositoryService {
     
     /**
      * 
-     * @param id
+     * @param repoId
+     * @param secretId
      */
     public void assignSecretToRepository(UUID repoId, UUID secretId);
+    
+    /**
+     * 
+     * @param repoId
+     * @param secretId
+     */
+    public void detachSecretFromRepository(UUID repoId, UUID secretId);
+    
+    /**
+     * 
+     * @param repoId
+     */
+    public List<Secret> getSecretsToRepository(UUID repoId);
 }

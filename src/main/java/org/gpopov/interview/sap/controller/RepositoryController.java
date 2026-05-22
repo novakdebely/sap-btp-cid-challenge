@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.gpopov.interview.sap.dto.Repository;
+import org.gpopov.interview.sap.dto.RepositoryDetails;
+import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.service.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,7 +24,7 @@ public class RepositoryController {
 	private RepositoryService repositoryService;
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Repository> getRepository(@PathVariable UUID id) {
+	public ResponseEntity<RepositoryDetails> getRepository(@PathVariable UUID id) {
 		return ResponseEntity.ok(repositoryService.findById(id));
 	}
 
@@ -46,5 +48,16 @@ public class RepositoryController {
 	public ResponseEntity<Void> addSecretToRepository(@PathVariable UUID repoId, @RequestParam UUID secretId) {
 		repositoryService.assignSecretToRepository(repoId, secretId);
 		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	@DeleteMapping("/{repoId}?secret={secretId}")
+	public ResponseEntity<Void> removeSecretfromRepository(@PathVariable UUID repoId, @RequestParam UUID secretId) {
+		repositoryService.detachSecretFromRepository(repoId, secretId);
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	@GetMapping("/{repoId}/secrets")
+	public ResponseEntity<List<Secret>> getSecretToRepository(@PathVariable UUID repoId) {
+		return ResponseEntity.ok(repositoryService.getSecretsToRepository(repoId));
 	}
 }

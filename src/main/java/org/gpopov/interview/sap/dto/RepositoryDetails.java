@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class Repository {
+public class RepositoryDetails {
 
 	private UUID id;
 	
@@ -17,4 +17,6 @@ public class Repository {
     private String name;
 
     private String description;
+    
+    List<UUID> secretIds;
 }

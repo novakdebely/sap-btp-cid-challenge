@@ -3,7 +3,6 @@ package org.gpopov.interview.sap.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.dto.ValidationResponse;
 import org.gpopov.interview.sap.service.impl.SecretServiceImpl;

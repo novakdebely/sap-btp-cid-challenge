@@ -1,14 +1,23 @@
 package org.gpopov.interview.sap.model;
 
-import jakarta.persistence.*;
+import java.util.Set;
+import java.util.UUID;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -31,11 +40,31 @@ public class RepositoryEntity {
     @Column
     private String description;
 
-    @ManyToMany
-    @JoinTable(
-    		  name = "repositories_secrets", 
-    		  joinColumns = @JoinColumn(name = "repository_id"), 
-    		  inverseJoinColumns = @JoinColumn(name = "secret_id"))
-    private List<SecretEntity> secrets = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.EAGER,
+    		cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "repositoriy_secret", 
+    		   joinColumns = @JoinColumn(name = "repository_id", referencedColumnName = "id"),
+    		   inverseJoinColumns = @JoinColumn(name =  "secret_id", referencedColumnName = "id"))
+    private Set<SecretEntity> secrets;
+    
+    /**
+     * 
+     * @param newSecret
+     */
+    public RepositoryEntity addSecret(SecretEntity newSecret) {
+    	this.getSecrets().add(newSecret);
+    	newSecret.getRepositories().add(this);
+    	return this;
+    }
+    
+    /**
+     * 
+     * @param newSecret
+     */
+    public RepositoryEntity removeSecret(SecretEntity newSecret) {
+    	this.getSecrets().remove(newSecret);
+    	newSecret.getRepositories().remove(this);
+    	return this;
+    }
 
 }

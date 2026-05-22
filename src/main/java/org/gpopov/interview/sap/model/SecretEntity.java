@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -28,8 +28,8 @@ public class SecretEntity {
     @Column(name = "secret_value", nullable = false)
     private String secretValue;
 
-
-    @ManyToMany(mappedBy = "secrets")
-    private List<RepositoryEntity> repositories;
-
+    @ManyToMany(mappedBy = "secrets",
+    		fetch = FetchType.EAGER,
+    		cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private Set<RepositoryEntity> repositories;
 }

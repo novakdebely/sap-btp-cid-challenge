@@ -5,14 +5,18 @@ import lombok.AllArgsConstructor;
 
 import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.dto.ValidationResponse;
+import org.gpopov.interview.sap.model.RepositoryEntity;
 import org.gpopov.interview.sap.model.SecretEntity;
+import org.gpopov.interview.sap.repository.RepositoryRepo;
 import org.gpopov.interview.sap.repository.SecretRepo;
 import org.gpopov.interview.sap.service.SecretService;
+import org.gpopov.interview.sap.util.EntityToModelConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +28,9 @@ public class SecretServiceImpl implements SecretService {
 
 	@Autowired
     private SecretRepo secretRepo;
+	
+	@Autowired
+    private RepositoryRepo repositoryRepo;
 
 	@Override
     @Transactional
@@ -32,7 +39,7 @@ public class SecretServiceImpl implements SecretService {
         entity.setName(request.getName());
         entity.setSecretValue(request.getValue());
 
-        return toSecret(secretRepo.save(entity));
+        return EntityToModelConverter.toSecret(secretRepo.save(entity));
     }
 
     @Override
@@ -55,30 +62,45 @@ public class SecretServiceImpl implements SecretService {
     	if (secretEntityOpt.isEmpty()) {
             throw new EntityNotFoundException("Secret not found: " + id);
         }
-    	return toSecret(secretEntityOpt.get());
+    	return EntityToModelConverter.toSecret(secretEntityOpt.get());
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Secret> listAll() {
     	 return secretRepo.findAll().stream()
-                 .map(this::toSecret)
+                 .map(EntityToModelConverter::toSecret)
                  .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public ValidationResponse validate(UUID secretId, UUID repositoryId) {
-        SecretEntity entity = secretRepo.findById(secretId)
-                .orElseThrow(() -> new EntityNotFoundException("Secret not found: " + secretId));
-        return ValidationResponse.valid();
-    }
-
-    private Secret toSecret(SecretEntity entity) {
-    	Secret r = new Secret();
-        r.setId(entity.getId());
-        r.setName(entity.getName());
-        r.setValue(entity.getSecretValue());
-        return r;
+    	Optional<SecretEntity> secretEntityOpt = secretRepo.findById(secretId);
+    	if (secretEntityOpt.isEmpty()) {
+            throw new EntityNotFoundException("Secret not found: " + secretId);
+        }
+    	Optional<RepositoryEntity> repositoryEntityOpt = repositoryRepo.findById(secretId);
+    	if (repositoryEntityOpt.isEmpty()) {
+            throw new EntityNotFoundException("Repository not found: " + secretId);
+        }
+    	RestClient restClient = RestClient.create();
+	    String errorMessage = restClient.get()
+	    		.uri(URI.create(repositoryEntityOpt.get().getUrl()))
+	    	    .header("Authorization", "Bearer " + secretEntityOpt.get().getSecretValue())
+	    	    .exchange((req, res) -> {
+	                try {
+	                    if (res.getStatusCode().is2xxSuccessful()) {
+	                        return null;
+	                    } else {
+	                    	return res.getBody().toString();
+	                    }
+	                } catch (Exception e) {
+	                    e.printStackTrace();
+	                    return e.getMessage();
+	                }
+	            });
+	    	return errorMessage == null? ValidationResponse.valid(): ValidationResponse.invalid(errorMessage);
+        
     }
 }
