@@ -13,6 +13,7 @@ import org.gpopov.interview.sap.service.impl.SecretServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.client.RestClient;
 
 public class SecretServiceImplTest extends BaseTest {
 	
@@ -21,6 +22,9 @@ public class SecretServiceImplTest extends BaseTest {
 	
 	@Autowired
     private RepositoryRepo repositoryRepo;
+
+	@Autowired
+	private RestClient restClient;
 	
     private SecretService secretService;
     
@@ -29,7 +33,7 @@ public class SecretServiceImplTest extends BaseTest {
     	secretRepo.deleteAll();
     	repositoryRepo.deleteAll();
     	
-    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo);
+    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, restClient);
     }
 
 	@Test

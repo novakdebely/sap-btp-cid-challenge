@@ -40,8 +40,7 @@ public class RepositoryEntity {
     @Column
     private String description;
 
-    @ManyToMany(fetch = FetchType.EAGER,
-    		cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany()
     @JoinTable(name = "repositoriy_secret", 
     		   joinColumns = @JoinColumn(name = "repository_id", referencedColumnName = "id"),
     		   inverseJoinColumns = @JoinColumn(name =  "secret_id", referencedColumnName = "id"))

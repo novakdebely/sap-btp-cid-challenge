@@ -21,4 +21,8 @@ public class ValidationResponse {
         r.message = errorMessage == null? "Secret is invalid":errorMessage;
         return r;
     }
+    
+    public boolean isValid() {
+    	return this.valid;
+    }
 }

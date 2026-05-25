@@ -41,8 +41,8 @@ public class EntityToModelConverter {
         r.setName(entity.getName());
         r.setDescription(entity.getDescription());
         
-        r.setSecretIds(Optional.ofNullable(entity.getSecrets()).orElse(Collections.emptySet()).stream()
-        		.map(SecretEntity::getId)
+        r.setSecrets(Optional.ofNullable(entity.getSecrets()).orElse(Collections.emptySet()).stream()
+        		.map(EntityToModelConverter::toSecret)
         		.collect(Collectors.toList()));
         
         return r;

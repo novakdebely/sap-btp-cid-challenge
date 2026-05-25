@@ -31,6 +31,9 @@ public class SecretServiceImpl implements SecretService {
 	
 	@Autowired
     private RepositoryRepo repositoryRepo;
+	
+	@Autowired
+	private RestClient restClient;
 
 	@Override
     @Transactional
@@ -80,11 +83,10 @@ public class SecretServiceImpl implements SecretService {
     	if (secretEntityOpt.isEmpty()) {
             throw new EntityNotFoundException("Secret not found: " + secretId);
         }
-    	Optional<RepositoryEntity> repositoryEntityOpt = repositoryRepo.findById(secretId);
+    	Optional<RepositoryEntity> repositoryEntityOpt = repositoryRepo.findById(repositoryId);
     	if (repositoryEntityOpt.isEmpty()) {
-            throw new EntityNotFoundException("Repository not found: " + secretId);
+            throw new EntityNotFoundException("Repository not found: " + repositoryId);
         }
-    	RestClient restClient = RestClient.create();
 	    String errorMessage = restClient.get()
 	    		.uri(URI.create(repositoryEntityOpt.get().getUrl()))
 	    	    .header("Authorization", "Bearer " + secretEntityOpt.get().getSecretValue())
@@ -100,7 +102,6 @@ public class SecretServiceImpl implements SecretService {
 	                    return e.getMessage();
 	                }
 	            });
-	    	return errorMessage == null? ValidationResponse.valid(): ValidationResponse.invalid(errorMessage);
-        
+	    return errorMessage == null? ValidationResponse.valid(): ValidationResponse.invalid(errorMessage);
     }
 }

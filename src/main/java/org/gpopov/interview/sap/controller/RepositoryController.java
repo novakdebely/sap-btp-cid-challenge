@@ -6,7 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.RepositoryDetails;
 import org.gpopov.interview.sap.dto.Secret;
+import org.gpopov.interview.sap.dto.SecretAssigment;
+import org.gpopov.interview.sap.dto.ValidationResponse;
 import org.gpopov.interview.sap.service.RepositoryService;
+import org.gpopov.interview.sap.service.SecretService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,9 @@ public class RepositoryController {
 
 	@Autowired
 	private RepositoryService repositoryService;
+	
+	@Autowired
+	private SecretService secretService;
 
 	@GetMapping("/{id}")
 	public ResponseEntity<RepositoryDetails> getRepository(@PathVariable UUID id) {
@@ -44,20 +50,20 @@ public class RepositoryController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PostMapping("/{repoId}?secret={secretId}")
-	public ResponseEntity<Void> addSecretToRepository(@PathVariable UUID repoId, @RequestParam UUID secretId) {
-		repositoryService.assignSecretToRepository(repoId, secretId);
-		return ResponseEntity.status(HttpStatus.OK).build();
-	}
-	
-	@DeleteMapping("/{repoId}?secret={secretId}")
-	public ResponseEntity<Void> removeSecretfromRepository(@PathVariable UUID repoId, @RequestParam UUID secretId) {
-		repositoryService.detachSecretFromRepository(repoId, secretId);
+	@PostMapping("/assign")
+	public ResponseEntity<Void> addSecretToRepository(@Valid @RequestBody SecretAssigment assignment) {
+		ValidationResponse valdiationResult = secretService.validate(assignment.getSecretId(), assignment.getRepoId());
+		if (!valdiationResult.isValid()) {
+			return ResponseEntity
+					.status(HttpStatus.BAD_REQUEST)
+					.build();
+		}
+		repositoryService.assignSecretToRepository(assignment.getRepoId(), assignment.getSecretId());
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
 	@GetMapping("/{repoId}/secrets")
-	public ResponseEntity<List<Secret>> getSecretToRepository(@PathVariable UUID repoId) {
+	public ResponseEntity<List<Secret>> getSecretsToRepository(@PathVariable UUID repoId) {
 		return ResponseEntity.ok(repositoryService.getSecretsToRepository(repoId));
 	}
 }

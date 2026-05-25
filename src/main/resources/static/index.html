@@ -1,587 +1,641 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="managerApp">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Repository Secret Manager</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
-    <style>
-        :root {
-            --sap-blue: #0070f2;
-            --sap-blue-dark: #0040b0;
-            --sap-blue-light: #e8f4fe;
-        }
+  <meta charset="UTF-8">
+  <title>Repository & Secrets Manager</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            background-color: #f4f5f6;
-            font-family: "72", "72full", Arial, Helvetica, sans-serif;
-        }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background: #f0f2f5;
+      color: #333;
+      overflow: hidden;
+    }
 
-        .navbar-brand span { color: var(--sap-blue); font-weight: 700; }
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #1a2535;
+      color: #b0bec5;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 22px 20px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #263547;
+    }
+    .menu-item {
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s, color 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .menu-item:hover { background: #263547; color: #e0e6ed; }
+    .menu-item.active {
+      background: #1d3a5e;
+      color: #5cadff;
+      border-left-color: #5cadff;
+      font-weight: 600;
+    }
 
-        .card { border: none; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
-        .card-header { background: #fff; border-bottom: 1px solid #e5e5e5; border-radius: 8px 8px 0 0 !important; }
+    /* ── Main area ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .content {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a2535;
+      margin-bottom: 22px;
+    }
 
-        .repo-card {
-            border-left: 3px solid var(--sap-blue);
-            transition: box-shadow .15s;
-        }
-        .repo-card:hover { box-shadow: 0 2px 8px rgba(0,112,242,.18); }
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: filter 0.15s, opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+    .btn:not(:disabled):hover { filter: brightness(0.9); }
+    .btn-primary   { background: #2979ff; color: #fff; }
+    .btn-danger    { background: #e53935; color: #fff; }
+    .btn-teal      { background: #00897b; color: #fff; }
+    .btn-secondary { background: #78909c; color: #fff; }
 
-        .secret-row {
-            background: #fafafa;
-            border-radius: 6px;
-            border: 1px solid #e8e8e8;
-            padding: .6rem 1rem;
-            margin-bottom: .4rem;
-        }
+    /* ── Table ── */
+    .table-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+      overflow: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: #1a2535;
+      color: #cfd8dc;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    tbody tr {
+      border-bottom: 1px solid #eceff1;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #e8f0fe; }
+    tbody tr.row-selected { background: #c9ddf8; }
+    tbody td { padding: 11px 16px; }
+    .no-data { padding: 36px; text-align: center; color: #aaa; font-size: 14px; }
+	.hide-column {display: none;}
 
-        .badge-type {
-            font-size: .7rem;
-            letter-spacing: .04em;
-            text-transform: uppercase;
-        }
+    /* ── Modal overlay ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.48);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 30px 32px;
+      min-width: 380px;
+      max-width: 520px;
+      width: 90%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.28);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a2535;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #eceff1;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #607d8b;
+      margin-bottom: 5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cfd8dc;
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+      color: #333;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2979ff;
+      box-shadow: 0 0 0 3px rgba(41,121,255,0.12);
+      background: #fff;
+    }
+    .form-group input[readonly],
+    .form-group textarea[readonly] {
+      background: #f5f7fa;
+      color: #546e7a;
+      cursor: default;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 90px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 26px;
+    }
+    .confirm-text { font-size: 14px; color: #546e7a; line-height: 1.6; }
+    .confirm-text strong { color: #1a2535; }
 
-        .btn-sap { background-color: var(--sap-blue); color: #fff; border: none; }
-        .btn-sap:hover { background-color: var(--sap-blue-dark); color: #fff; }
-
-        .secrets-panel {
-            background: var(--sap-blue-light);
-            border-radius: 6px;
-            padding: 1rem;
-            margin-top: .75rem;
-        }
-
-        .toast-container { z-index: 1090; }
-
-        #emptyState { color: #8a9097; }
-
-        .valid-badge   { background-color: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-        .invalid-badge { background-color: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
-    </style>
+    /* ── Status bar ── */
+    .status-bar {
+      padding: 7px 24px;
+      font-size: 12px;
+      background: #eceff1;
+      color: #78909c;
+      border-top: 1px solid #dde3e8;
+      flex-shrink: 0;
+      min-height: 30px;
+    }
+    .status-bar.ok  { background: #e8f5e9; color: #2e7d32; }
+    .status-bar.err { background: #ffebee; color: #c62828; }
+  </style>
 </head>
-<body>
+<body ng-controller="MainCtrl">
 
-<!-- Navbar -->
-<nav class="navbar navbar-light bg-white shadow-sm mb-4">
-    <div class="container-lg">
-        <span class="navbar-brand d-flex align-items-center gap-2">
-            <i class="bi bi-shield-lock-fill fs-4" style="color:var(--sap-blue)"></i>
-            <span>Repository Secret Manager</span>
-            <small class="text-muted fw-normal fs-6 ms-1">SAP BTP CID Challenge</small>
-        </span>
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">Manager</div>
+    <div class="menu-item"
+         ng-class="{active: view === 'repositories'}"
+         ng-click="switchView('repositories')">Repositories</div>
+    <div class="menu-item"
+         ng-class="{active: view === 'secrets'}"
+         ng-click="switchView('secrets')">Secrets</div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+    <div class="content">
+
+      <!-- ── REPOSITORIES ── -->
+      <div ng-show="view === 'repositories'">
+        <div class="section-title">Repositories</div>
+        <div class="toolbar">
+          <button class="btn btn-primary" ng-click="openCreateRepo()">Create Repository</button>
+          <button class="btn btn-danger"  ng-click="openDeleteRepo()"   ng-disabled="!selRepo">Delete Repository</button>
+          <button class="btn btn-teal"    ng-click="openRepoDetails()"  ng-disabled="!selRepo">Repository Details</button>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+				<th class="hide-column">ID</th>
+				<th>URL</th>
+				<th>Name</th>
+				<th>Description</th>
+			</tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="r in repositories track by r.id"
+                  ng-class="{'row-selected': selRepo && selRepo.id === r.id}"
+                  ng-click="toggleSelRepo(r)">
+                <td class="hide-column">{{r.id}}</td>
+                <td>{{r.url}}</td>
+                <td>{{r.name}}</td>
+                <td>{{r.description}}</td>
+              </tr>
+              <tr ng-if="repositories.length === 0">
+                <td colspan="4" class="no-data">No repositories found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── SECRETS ── -->
+      <div ng-show="view === 'secrets'">
+        <div class="section-title">Secrets</div>
+        <div class="toolbar">
+          <button class="btn btn-primary" ng-click="openCreateSecret()">Create Secret</button>
+          <button class="btn btn-danger"  ng-click="openDeleteSecret()"  ng-disabled="!selSecret">Delete Secret</button>
+          <button class="btn btn-teal"    ng-click="openAssignSecret()"  ng-disabled="!selSecret">Assign Secret to Repository</button>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+				<th class="hide-column">ID</th>
+				<th>Name</th>
+				<th>Value</th>
+			</tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="s in secrets track by s.id"
+                  ng-class="{'row-selected': selSecret && selSecret.id === s.id}"
+                  ng-click="toggleSelSecret(s)">
+                <td class="hide-column">{{s.id}}</td>
+                <td>{{s.name}}</td>
+                <td>{{s.value}}</td>
+              </tr>
+              <tr ng-if="secrets.length === 0">
+                <td colspan="3" class="no-data">No secrets found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+
+    <div class="status-bar" ng-class="{ok: statusKind==='ok', err: statusKind==='err'}">{{status}}</div>
+  </div><!-- /main -->
+
+
+  <!-- ═══════════════════════ DIALOGS ═══════════════════════ -->
+
+  <!-- Create Repository -->
+  <div class="overlay" ng-show="dlg.createRepo">
+    <div class="modal">
+      <div class="modal-title">Create Repository</div>
+      <div class="form-group">
+        <label>URL</label>
+        <input type="text" ng-model="form.url" placeholder="https://github.com/org/repo">
+      </div>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" ng-model="form.name" placeholder="Repository name">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" ng-model="form.description" placeholder="Short description">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" ng-click="closeAll()">Cancel</button>
+        <button class="btn btn-primary"   ng-click="createRepo()">OK</button>
+      </div>
     </div>
-</nav>
+  </div>
 
-<!-- Main -->
-<div class="container-lg pb-5">
-
-    <!-- Add Repository -->
-    <div class="card mb-4">
-        <div class="card-header py-3">
-            <h5 class="mb-0"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Repository</h5>
-        </div>
-        <div class="card-body">
-            <form id="addRepoForm" class="row g-3" novalidate>
-                <div class="col-md-5">
-                    <label class="form-label fw-semibold">Repository URL <span class="text-danger">*</span></label>
-                    <input type="url" class="form-control" id="repoUrl" placeholder="https://github.com/org/repo" required />
-                    <div class="invalid-feedback">Please enter a valid URL.</div>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Name</label>
-                    <input type="text" class="form-control" id="repoName" placeholder="My Repository" />
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Description</label>
-                    <input type="text" class="form-control" id="repoDesc" placeholder="Optional description" />
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-sap w-100">
-                        <i class="bi bi-plus-lg me-1"></i>Add
-                    </button>
-                </div>
-            </form>
-        </div>
+  <!-- Delete Repository -->
+  <div class="overlay" ng-show="dlg.deleteRepo">
+    <div class="modal">
+      <div class="modal-title">Delete Repository</div>
+      <p class="confirm-text">
+        Are you sure you want to delete repository
+        <strong>{{selRepo.name}}</strong>?<br>This action cannot be undone.
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" ng-click="closeAll()">Cancel</button>
+        <button class="btn btn-danger"    ng-click="deleteRepo()">OK</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Repository List -->
-    <div class="card">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-list-ul me-2 text-primary"></i>Repositories</h5>
-            <span id="repoCount" class="badge bg-secondary">0</span>
-        </div>
-        <div class="card-body" id="repoList">
-            <div id="emptyState" class="text-center py-5">
-                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                No repositories yet. Add one above.
-            </div>
-        </div>
+  <!-- Repository Details -->
+  <div class="overlay" ng-show="dlg.repoDetails">
+    <div class="modal">
+      <div class="modal-title">Repository Details</div>
+      <div class="form-group">
+        <label>ID</label>
+        <input type="text" readonly ng-model="details.id">
+      </div>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" readonly ng-model="details.name">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" readonly ng-model="details.description">
+      </div>
+      <div class="form-group">
+        <label>Assigned Secrets</label>
+        <textarea readonly ng-model="details.secrets"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" ng-click="closeAll()">Close</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Add Secret Modal -->
-<div class="modal fade" id="addSecretModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-key me-2"></i>Add Secret</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addSecretForm" novalidate>
-                <div class="modal-body">
-                    <input type="hidden" id="secretRepoId" />
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Secret Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="secretName" placeholder="e.g. GitHub Token" required />
-                        <div class="invalid-feedback">Name is required.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Type</label>
-                        <select class="form-select" id="secretType">
-                            <option value="">— select type —</option>
-                            <option value="TOKEN">Token</option>
-                            <option value="PASSWORD">Password</option>
-                            <option value="SSH_KEY">SSH Key</option>
-                            <option value="CERTIFICATE">Certificate</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Secret Value <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="secretValue" placeholder="Enter secret value" required />
-                            <button class="btn btn-outline-secondary" type="button" id="toggleSecretValue">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <div class="invalid-feedback">Value is required.</div>
-                        <div class="form-text">The value is stored as a BCrypt hash and cannot be retrieved later.</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sap"><i class="bi bi-save me-1"></i>Save Secret</button>
-                </div>
-            </form>
-        </div>
+  <!-- Create Secret -->
+  <div class="overlay" ng-show="dlg.createSecret">
+    <div class="modal">
+      <div class="modal-title">Create Secret</div>
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" ng-model="form.name" placeholder="Secret name">
+      </div>
+      <div class="form-group">
+        <label>Value</label>
+        <input type="text" ng-model="form.value" placeholder="Secret value">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" ng-click="closeAll()">Cancel</button>
+        <button class="btn btn-primary"   ng-click="createSecret()">OK</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Validate Secret Modal -->
-<div class="modal fade" id="validateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>Validate Secret</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="validateForm" novalidate>
-                <div class="modal-body">
-                    <input type="hidden" id="validateSecretId" />
-                    <p class="text-muted mb-3">
-                        Enter the secret value to verify it matches the stored hash for
-                        <strong id="validateSecretName"></strong>.
-                    </p>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Secret Value <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="validateValue" required />
-                            <button class="btn btn-outline-secondary" type="button" id="toggleValidateValue">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <div class="invalid-feedback">Value is required.</div>
-                    </div>
-                    <div id="validateResult" class="d-none">
-                        <div id="validateResultBadge" class="p-3 rounded text-center fw-semibold fs-5"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-sap"><i class="bi bi-check2-circle me-1"></i>Validate</button>
-                </div>
-            </form>
-        </div>
+  <!-- Delete Secret -->
+  <div class="overlay" ng-show="dlg.deleteSecret">
+    <div class="modal">
+      <div class="modal-title">Delete Secret</div>
+      <p class="confirm-text">
+        Are you sure you want to delete secret
+        <strong>{{selSecret.name}}</strong>?<br>This action cannot be undone.
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" ng-click="closeAll()">Cancel</button>
+        <button class="btn btn-danger"    ng-click="deleteSecret()">OK</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Confirm Delete Modal -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p id="confirmDeleteMessage">Are you sure you want to delete this item?</p>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn">Delete</button>
-            </div>
-        </div>
+  <!-- Assign Secret to Repository -->
+  <div class="overlay" ng-show="dlg.assignSecret">
+    <div class="modal">
+      <div class="modal-title">Assign Secret to Repository</div>
+      <p class="confirm-text" style="margin-bottom:18px;">
+        Assign secret <strong>{{selSecret.name}}</strong> to repository:
+      </p>
+      <div class="form-group">
+        <label>Repository</label>
+        <select ng-model="assignRepo"
+                ng-options="r as r.url for r in repositories track by r.id">
+          <option value="">-- Select repository --</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" ng-click="closeAll()">Cancel</button>
+        <button class="btn btn-primary"   ng-click="assignSecret()" ng-disabled="!assignRepo">OK</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Toast -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="appToast" class="toast align-items-center border-0" role="alert">
-        <div class="d-flex">
-            <div class="toast-body" id="toastMessage"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-// ─── State ────────────────────────────────────────────────────────────────────
-const state = {
-    repositories: [],
-    expandedRepoId: null,
-    secrets: {}          // { [repoId]: SecretResponse[] }
-};
+  <!-- ═══════════════════════ CONTROLLER ═══════════════════════ -->
+  <script>
+  angular.module('managerApp', [])
+    .controller('MainCtrl', ['$scope', '$http', function($scope, $http) {
 
-// ─── Bootstrap instances ──────────────────────────────────────────────────────
-const addSecretModal    = new bootstrap.Modal('#addSecretModal');
-const validateModal     = new bootstrap.Modal('#validateModal');
-const confirmDeleteModal = new bootstrap.Modal('#confirmDeleteModal');
-const toast             = new bootstrap.Toast('#appToast', { delay: 3500 });
+      /* ── State ── */
+      $scope.view            = 'repositories';
+      $scope.repositories    = [];
+      $scope.secrets         = [];
+      $scope.selRepo         = null;
+      $scope.selSecret       = null;
+      $scope.form            = {};
+      $scope.details         = {};
+      $scope.assignRepo      = null;
+      $scope.status          = 'Ready';
+      $scope.statusKind      = '';
 
-// ─── Toast helper ─────────────────────────────────────────────────────────────
-function showToast(message, success = true) {
-    const el = document.getElementById('appToast');
-    el.className = `toast align-items-center border-0 text-white ${success ? 'bg-success' : 'bg-danger'}`;
-    document.getElementById('toastMessage').textContent = message;
-    toast.show();
-}
+      $scope.dlg = {
+        createRepo:   false,
+        deleteRepo:   false,
+        repoDetails:  false,
+        createSecret: false,
+        deleteSecret: false,
+        assignSecret: false
+      };
 
-// ─── API helpers ──────────────────────────────────────────────────────────────
-async function api(method, path, body) {
-    const opts = { method, headers: { 'Content-Type': 'application/json' } };
-    if (body !== undefined) opts.body = JSON.stringify(body);
-    const res = await fetch('/api' + path, opts);
-    if (res.status === 204) return null;
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || JSON.stringify(json));
-    return json;
-}
+      /* ── Helpers ── */
+      function setStatus(msg, kind) {
+        $scope.status     = msg;
+        $scope.statusKind = kind || '';
+      }
 
-// ─── Repository API ───────────────────────────────────────────────────────────
-async function loadRepositories() {
-    state.repositories = await api('GET', '/repositories');
-    renderRepositories();
-}
+      $scope.closeAll = function() {
+        Object.keys($scope.dlg).forEach(function(k) { $scope.dlg[k] = false; });
+        $scope.form       = {};
+        $scope.assignRepo = null;
+      };
 
-async function createRepository(url, name, description) {
-    await api('POST', '/repositories', { url, name, description });
-    showToast('Repository added.');
-    await loadRepositories();
-}
-
-async function deleteRepository(id) {
-    await api('DELETE', `/repositories/${id}`);
-    if (state.expandedRepoId === id) state.expandedRepoId = null;
-    delete state.secrets[id];
-    showToast('Repository deleted.');
-    await loadRepositories();
-}
-
-// ─── Secret API ───────────────────────────────────────────────────────────────
-async function loadSecrets(repoId) {
-    state.secrets[repoId] = await api('GET', `/repositories/${repoId}/secrets`);
-    renderSecrets(repoId);
-}
-
-async function createSecret(repoId, name, secretType, value) {
-    await api('POST', `/repositories/${repoId}/secrets`, { name, secretType, value });
-    showToast('Secret saved.');
-    await loadSecrets(repoId);
-}
-
-async function deleteSecret(secretId, repoId) {
-    await api('DELETE', `/secrets/${secretId}`);
-    showToast('Secret deleted.');
-    await loadSecrets(repoId);
-}
-
-async function validateSecret(secretId, value) {
-    return api('POST', `/secrets/${secretId}/validate`, { value });
-}
-
-// ─── Render: Repositories ─────────────────────────────────────────────────────
-function renderRepositories() {
-    const list  = document.getElementById('repoList');
-    const count = document.getElementById('repoCount');
-    count.textContent = state.repositories.length;
-
-    if (!state.repositories.length) {
-        list.innerHTML = `
-            <div id="emptyState" class="text-center py-5" style="color:#8a9097">
-                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                No repositories yet. Add one above.
-            </div>`;
-        return;
-    }
-
-    list.innerHTML = state.repositories.map(repo => {
-        const isExpanded = state.expandedRepoId === repo.id;
-        const nameDisplay = repo.name ? `<span class="fw-semibold me-2">${esc(repo.name)}</span>` : '';
-        const descDisplay = repo.description ? `<small class="text-muted d-block">${esc(repo.description)}</small>` : '';
-        return `
-        <div class="card repo-card mb-3" id="repo-${repo.id}">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                    <div>
-                        ${nameDisplay}
-                        <a href="${esc(repo.url)}" target="_blank" rel="noopener" class="text-break text-decoration-none">
-                            <i class="bi bi-link-45deg"></i> ${esc(repo.url)}
-                        </a>
-                        ${descDisplay}
-                        <small class="text-muted">Added ${formatDate(repo.createdAt)}</small>
-                    </div>
-                    <div class="d-flex gap-2 flex-shrink-0">
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleSecrets('${repo.id}')">
-                            <i class="bi bi-key me-1"></i>
-                            Secrets
-                            <span class="badge bg-primary ms-1">${repo.secretCount}</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('repo','${repo.id}','${esc(repo.url)}')">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                    </div>
-                </div>
-                <div id="secrets-panel-${repo.id}" class="${isExpanded ? '' : 'd-none'}">
-                    ${buildSecretsPanel(repo.id)}
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-
-    // Re-render expanded panel if open
-    if (state.expandedRepoId && state.secrets[state.expandedRepoId]) {
-        renderSecrets(state.expandedRepoId);
-    }
-}
-
-function buildSecretsPanel(repoId) {
-    return `
-        <div class="secrets-panel mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold"><i class="bi bi-key-fill me-1 text-warning"></i>Secrets</span>
-                <button class="btn btn-sm btn-sap" onclick="openAddSecret('${repoId}')">
-                    <i class="bi bi-plus-lg me-1"></i>Add Secret
-                </button>
-            </div>
-            <div id="secrets-list-${repoId}">
-                <div class="text-center text-muted py-2">
-                    <div class="spinner-border spinner-border-sm" role="status"></div>
-                    Loading…
-                </div>
-            </div>
-        </div>`;
-}
-
-function renderSecrets(repoId) {
-    const container = document.getElementById(`secrets-list-${repoId}`);
-    if (!container) return;
-    const secrets = state.secrets[repoId] || [];
-    if (!secrets.length) {
-        container.innerHTML = '<p class="text-muted text-center mb-0 py-2">No secrets yet.</p>';
-        return;
-    }
-    container.innerHTML = secrets.map(s => `
-        <div class="secret-row d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <span class="fw-semibold me-2">${esc(s.name)}</span>
-                ${s.secretType ? `<span class="badge badge-type bg-secondary me-2">${esc(s.secretType)}</span>` : ''}
-                <small class="text-muted">Added ${formatDate(s.createdAt)}</small>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-success" onclick="openValidate('${s.id}','${esc(s.name)}')">
-                    <i class="bi bi-shield-check me-1"></i>Validate
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('secret','${s.id}','${esc(s.name)}','${repoId}')">
-                    <i class="bi bi-trash3"></i>
-                </button>
-            </div>
-        </div>`).join('');
-}
-
-// ─── Toggle secrets panel ─────────────────────────────────────────────────────
-async function toggleSecrets(repoId) {
-    const panel = document.getElementById(`secrets-panel-${repoId}`);
-    if (!panel) return;
-
-    if (state.expandedRepoId === repoId) {
-        panel.classList.add('d-none');
-        state.expandedRepoId = null;
-        return;
-    }
-
-    // Close previous
-    if (state.expandedRepoId) {
-        const prev = document.getElementById(`secrets-panel-${state.expandedRepoId}`);
-        if (prev) prev.classList.add('d-none');
-    }
-
-    state.expandedRepoId = repoId;
-    panel.innerHTML = buildSecretsPanel(repoId).replace(/<div class="secrets-panel[^>]*>/, '').replace(/<\/div>\s*$/, '');
-
-    // Replace panel content
-    panel.innerHTML = buildSecretsPanel(repoId).match(/<div class="secrets-panel[^"]*"[^>]*>([\s\S]*)<\/div>\s*$/)?.[1] || '';
-    panel.innerHTML = buildSecretsPanel(repoId);
-    panel.classList.remove('d-none');
-
-    await loadSecrets(repoId);
-}
-
-// ─── Add Secret modal ─────────────────────────────────────────────────────────
-function openAddSecret(repoId) {
-    document.getElementById('secretRepoId').value = repoId;
-    document.getElementById('secretName').value  = '';
-    document.getElementById('secretType').value  = '';
-    document.getElementById('secretValue').value = '';
-    document.getElementById('addSecretForm').classList.remove('was-validated');
-    addSecretModal.show();
-}
-
-// ─── Validate modal ───────────────────────────────────────────────────────────
-function openValidate(secretId, secretName) {
-    document.getElementById('validateSecretId').value = secretId;
-    document.getElementById('validateSecretName').textContent = secretName;
-    document.getElementById('validateValue').value = '';
-    document.getElementById('validateResult').classList.add('d-none');
-    document.getElementById('validateForm').classList.remove('was-validated');
-    validateModal.show();
-}
-
-// ─── Confirm delete ───────────────────────────────────────────────────────────
-let pendingDelete = null;
-
-function confirmDelete(type, id, label, repoId) {
-    pendingDelete = { type, id, repoId };
-    const noun = type === 'repo' ? 'repository' : 'secret';
-    document.getElementById('confirmDeleteMessage').innerHTML =
-        `Are you sure you want to delete the ${noun} <strong>${esc(label)}</strong>?<br>
-         <small class="text-muted">${type === 'repo' ? 'All associated secrets will also be deleted.' : ''}</small>`;
-    confirmDeleteModal.show();
-}
-
-document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-    if (!pendingDelete) return;
-    confirmDeleteModal.hide();
-    try {
-        if (pendingDelete.type === 'repo') {
-            await deleteRepository(pendingDelete.id);
+      /* ── Menu ── */
+      $scope.switchView = function(v) {
+        $scope.view      = v;
+        $scope.selRepo   = null;
+        $scope.selSecret = null;
+        if (v === 'repositories') {
+          loadRepos();
         } else {
-            await deleteSecret(pendingDelete.id, pendingDelete.repoId);
+          loadSecrets();
+          loadRepos();   // needed for Assign dialog dropdown
         }
-    } catch (e) {
-        showToast(e.message, false);
-    }
-    pendingDelete = null;
-});
+      };
 
-// ─── Form: Add Repository ─────────────────────────────────────────────────────
-document.getElementById('addRepoForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    form.classList.add('was-validated');
-    if (!form.checkValidity()) return;
+      /* ── Row selection ── */
+      $scope.toggleSelRepo = function(r) {
+        $scope.selRepo = ($scope.selRepo && $scope.selRepo.id === r.id) ? null : r;
+      };
+      $scope.toggleSelSecret = function(s) {
+        $scope.selSecret = ($scope.selSecret && $scope.selSecret.id === s.id) ? null : s;
+      };
 
-    const url  = document.getElementById('repoUrl').value.trim();
-    const name = document.getElementById('repoName').value.trim();
-    const desc = document.getElementById('repoDesc').value.trim();
-    try {
-        await createRepository(url, name || null, desc || null);
-        form.reset();
-        form.classList.remove('was-validated');
-    } catch (e) {
-        showToast(e.message, false);
-    }
-});
+      /* ════════ REPOSITORIES ════════ */
 
-// ─── Form: Add Secret ─────────────────────────────────────────────────────────
-document.getElementById('addSecretForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    form.classList.add('was-validated');
-    if (!form.checkValidity()) return;
+      function loadRepos() {
+        setStatus('Loading repositories…');
+        $http.get('/api/v1/repositories').then(function(res) {
+          $scope.repositories = res.data;
+          setStatus('Repositories loaded.', 'ok');
+        }, function(err) {
+          setStatus('Failed to load repositories: ' + errMsg(err), 'err');
+        });
+      }
 
-    const repoId = document.getElementById('secretRepoId').value;
-    const name   = document.getElementById('secretName').value.trim();
-    const type   = document.getElementById('secretType').value || null;
-    const value  = document.getElementById('secretValue').value;
-    try {
-        await createSecret(repoId, name, type, value);
-        addSecretModal.hide();
-    } catch (e) {
-        showToast(e.message, false);
-    }
-});
+      $scope.openCreateRepo = function() {
+        $scope.form = { url: '', name: '', description: '' };
+        $scope.dlg.createRepo = true;
+      };
 
-// ─── Form: Validate ───────────────────────────────────────────────────────────
-document.getElementById('validateForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    form.classList.add('was-validated');
-    if (!form.checkValidity()) return;
+      $scope.createRepo = function() {
+        var payload = {
+          url:         $scope.form.url,
+          name:        $scope.form.name,
+          description: $scope.form.description
+        };
+        $http.post('/api/v1/repositories', payload).then(function() {
+          $scope.closeAll();
+          setStatus('Repository created.', 'ok');
+          loadRepos();
+        }, function(err) {
+          setStatus('Failed to create repository: ' + errMsg(err), 'err');
+        });
+      };
 
-    const secretId = document.getElementById('validateSecretId').value;
-    const value    = document.getElementById('validateValue').value;
-    try {
-        const result = await validateSecret(secretId, value);
-        const badge  = document.getElementById('validateResultBadge');
-        badge.className = `p-3 rounded text-center fw-semibold fs-5 ${result.valid ? 'valid-badge' : 'invalid-badge'}`;
-        badge.innerHTML = result.valid
-            ? '<i class="bi bi-check-circle-fill me-2"></i>Secret is VALID'
-            : '<i class="bi bi-x-circle-fill me-2"></i>Secret is INVALID';
-        document.getElementById('validateResult').classList.remove('d-none');
-    } catch (e) {
-        showToast(e.message, false);
-    }
-});
+      $scope.openDeleteRepo = function() {
+        if (!$scope.selRepo) return;
+        $scope.dlg.deleteRepo = true;
+      };
 
-// ─── Toggle password visibility ───────────────────────────────────────────────
-function bindToggle(btnId, inputId) {
-    document.getElementById(btnId).addEventListener('click', () => {
-        const inp = document.getElementById(inputId);
-        const icon = document.querySelector(`#${btnId} i`);
-        if (inp.type === 'password') {
-            inp.type = 'text';
-            icon.className = 'bi bi-eye-slash';
-        } else {
-            inp.type = 'password';
-            icon.className = 'bi bi-eye';
+      $scope.deleteRepo = function() {
+        $http.delete('/api/v1/repositories/' + $scope.selRepo.id).then(function() {
+          $scope.selRepo = null;
+          $scope.closeAll();
+          setStatus('Repository deleted.', 'ok');
+          loadRepos();
+        }, function(err) {
+          setStatus('Failed to delete repository: ' + errMsg(err), 'err');
+        });
+      };
+
+      $scope.openRepoDetails = function() {
+        if (!$scope.selRepo) return;
+        setStatus('Loading repository details…');
+        $http.get('/api/v1/repositories/' + $scope.selRepo.id).then(function(res) {
+          var d = res.data;
+          var names = [];
+          if (Array.isArray(d.secrets)) {
+            names = d.secrets.map(function(s) { return (typeof s === 'object') ? s.name : s; });
+          }
+          $scope.details = {
+            id:          d.id,
+            name:        d.name,
+            description: d.description,
+            secrets:   names.join('\n')
+          };
+          $scope.dlg.repoDetails = true;
+          setStatus('');
+        }, function(err) {
+          setStatus('Failed to load details: ' + errMsg(err), 'err');
+        });
+      };
+	  
+	  $scope.assignedSecrets = function(){
+	      var secretList = "";
+	      $scope.details.secrets.forEach(function(secret){
+	          secretList+=secrets.name+"\n";
+	      });
+	      return secretList;
+	    }
+
+      /* ════════ SECRETS ════════ */
+
+      function loadSecrets() {
+        setStatus('Loading secrets…');
+        $http.get('/api/v1/secrets').then(function(res) {
+          $scope.secrets = res.data;
+          setStatus('Secrets loaded.', 'ok');
+        }, function(err) {
+          setStatus('Failed to load secrets: ' + errMsg(err), 'err');
+        });
+      }
+
+      $scope.openCreateSecret = function() {
+        $scope.form = { name: '', value: '' };
+        $scope.dlg.createSecret = true;
+      };
+
+      $scope.createSecret = function() {
+        var payload = { name: $scope.form.name, value: $scope.form.value };
+        $http.post('/api/v1/secrets', payload).then(function() {
+          $scope.closeAll();
+          setStatus('Secret created.', 'ok');
+          loadSecrets();
+        }, function(err) {
+          setStatus('Failed to create secret: ' + errMsg(err), 'err');
+        });
+      };
+
+      $scope.openDeleteSecret = function() {
+        if (!$scope.selSecret) return;
+        $scope.dlg.deleteSecret = true;
+      };
+
+      $scope.deleteSecret = function() {
+        $http.delete('/api/v1/secrets/' + $scope.selSecret.id).then(function() {
+          $scope.selSecret = null;
+          $scope.closeAll();
+          setStatus('Secret deleted.', 'ok');
+          loadSecrets();
+        }, function(err) {
+          setStatus('Failed to delete secret: ' + errMsg(err), 'err');
+        });
+      };
+
+      $scope.openAssignSecret = function() {
+        if (!$scope.selSecret) return;
+        $scope.assignRepo = null;
+        $scope.dlg.assignSecret = true;
+      };
+
+      $scope.assignSecret = function() {
+        if (!$scope.assignRepo) return;
+		var payload = { repo_id:  $scope.assignRepo.id, secret_id:  $scope.selSecret.id };
+        $http.post('/api/v1/repositories/assign', payload).then(function() {
+          $scope.closeAll();
+          setStatus('Secret "' + $scope.selSecret.name + '" assigned to repository.', 'ok');
+        }, function(err) {
+          setStatus('Failed to assign secret: ' + errMsg(err), 'err');
+        });
+      };
+
+      /* ── Error helper ── */
+      function errMsg(err) {
+        if (err && err.data) {
+          return typeof err.data === 'string' ? err.data : JSON.stringify(err.data);
         }
-    });
-}
-bindToggle('toggleSecretValue',  'secretValue');
-bindToggle('toggleValidateValue', 'validateValue');
+        return 'HTTP ' + (err && err.status);
+      }
 
-// ─── Reset validate result on modal close ────────────────────────────────────
-document.getElementById('validateModal').addEventListener('hidden.bs.modal', () => {
-    document.getElementById('validateResult').classList.add('d-none');
-    document.getElementById('validateValue').value = '';
-    document.getElementById('validateForm').classList.remove('was-validated');
-});
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function esc(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function formatDate(iso) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-}
-
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
-loadRepositories().catch(e => showToast('Failed to load repositories: ' + e.message, false));
-</script>
+      /* ── Bootstrap ── */
+      loadRepos();
+    }]);
+  </script>
 </body>
 </html>

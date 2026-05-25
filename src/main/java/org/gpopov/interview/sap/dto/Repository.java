@@ -1,6 +1,5 @@
 package org.gpopov.interview.sap.dto;
 
-import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.constraints.NotBlank;

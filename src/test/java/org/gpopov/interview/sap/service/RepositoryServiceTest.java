@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.client.RestClient;
 
 
 public class RepositoryServiceTest extends BaseTest {
@@ -30,6 +31,9 @@ public class RepositoryServiceTest extends BaseTest {
 	@Autowired
     private SecretRepo secretRepo;
 	
+	@Autowired
+	private RestClient restClient;
+	
     private RepositoryService repositoryService;
     private SecretService secretService;
     
@@ -39,7 +43,7 @@ public class RepositoryServiceTest extends BaseTest {
     	secretRepo.deleteAll();
     	
     	repositoryService = new RepositoryServiceImpl(repositoryRepo, secretRepo);
-    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo);
+    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, restClient);
     }
 	
 	@Test
@@ -110,7 +114,7 @@ public class RepositoryServiceTest extends BaseTest {
 		RepositoryDetails repository = repositoryService.findById(newRepository.getId());
 		
 		assertNotNull(repository);
-		assertEquals(0, repository.getSecretIds().size());
+		assertEquals(0, repository.getSecrets().size());
 		
 		// Create secrets
 		String secretName = "Delete Secret ";
@@ -129,12 +133,12 @@ public class RepositoryServiceTest extends BaseTest {
 		
 		repository = repositoryService.findById(newRepository.getId());
 		assertNotNull(repository);
-		assertEquals(3, repository.getSecretIds().size());
+		assertEquals(3, repository.getSecrets().size());
 		
 		listSecrets.forEach(secret -> repositoryService.detachSecretFromRepository(newRepository.getId(), secret.getId()));
 		
 		repository = repositoryService.findById(newRepository.getId());
 		assertNotNull(repository);
-		assertEquals(0, repository.getSecretIds().size());
+		assertEquals(0, repository.getSecrets().size());
 	}
 }
