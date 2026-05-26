@@ -1,14 +1,17 @@
 package org.gpopov.interview.sap.service.impl;
 
-import jakarta.persistence.EntityNotFoundException;
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.RepositoryDetails;
-import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.model.RepositoryEntity;
+import org.gpopov.interview.sap.model.RepositorySecretEntity;
 import org.gpopov.interview.sap.model.SecretEntity;
 import org.gpopov.interview.sap.repository.RepositoryRepo;
+import org.gpopov.interview.sap.repository.RepositorySecretRepo;
 import org.gpopov.interview.sap.repository.SecretRepo;
 import org.gpopov.interview.sap.service.RepositoryService;
 import org.gpopov.interview.sap.util.EntityToModelConverter;
@@ -16,11 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -31,6 +31,9 @@ public class RepositoryServiceImpl implements RepositoryService{
 	
 	@Autowired
     private SecretRepo secretRepo;
+	
+	@Autowired
+	private RepositorySecretRepo repositorySecretRepo;
 
 	@Override
     @Transactional
@@ -62,8 +65,10 @@ public class RepositoryServiceImpl implements RepositoryService{
     	if (repositoryEntityOpt.isEmpty()) {
             throw new EntityNotFoundException("Repository not found: " + id);
         }
+    	RepositoryEntity entiry = repositoryEntityOpt.get();
+    	List<SecretEntity> secrets = repositorySecretRepo.findSecretsByRepositoryId(entiry.getId());
 
-        return EntityToModelConverter.toRepositoryDetails(repositoryEntityOpt.get());
+        return EntityToModelConverter.toRepositoryDetails(repositoryEntityOpt.get(), secrets);
     }
 
 	@Override
@@ -75,9 +80,8 @@ public class RepositoryServiceImpl implements RepositoryService{
         }
         RepositoryEntity entity = repositoryEntityOpt.get();
         // Remove assigned secrets
-        Set<SecretEntity> secrets = entity.getSecrets();
-        secrets.stream().forEach(secret -> entity.removeSecret(secret));
-
+        repositorySecretRepo.deleteAllByRepositoryId(entity.getId());
+        
         repositoryRepo.deleteById(id);
     }
 
@@ -92,8 +96,10 @@ public class RepositoryServiceImpl implements RepositoryService{
 		if (secretOpt.isEmpty()) {
             throw new EntityNotFoundException("Secret not found: " + secretId);
         }
-
-		repositoryRepo.save(repositoryOpt.get().addSecret(secretOpt.get()));
+		RepositorySecretEntity newEntiry = new RepositorySecretEntity(repositoryOpt.get(), secretOpt.get());
+		repositorySecretRepo.save(newEntiry);
+		
+		//repositoryRepo.save(repositoryOpt.get().addSecret(secretOpt.get()));
 	}
 	
 	@Override
@@ -108,19 +114,8 @@ public class RepositoryServiceImpl implements RepositoryService{
             throw new EntityNotFoundException("Secret not found: " + secretId);
         }
 
-		repositoryRepo.save(repositoryOpt.get().removeSecret(secretOpt.get()));
-	}
-	
-	@Override
-	@Transactional
-	public List<Secret> getSecretsToRepository(UUID repoId) {
-		Optional<RepositoryEntity> repositoryOpt = repositoryRepo.findById(repoId);
-		if (repositoryOpt.isEmpty()) {
-            throw new EntityNotFoundException("Repository not found: " + repoId);
-        }
-		Set<SecretEntity> secretEntities = repositoryOpt.get().getSecrets();
-		return secretEntities.stream()
-                .map(EntityToModelConverter::toSecret)
-                .collect(Collectors.toList());
+		repositorySecretRepo.deleteAllByRepositoryIdAndSecretId(
+				repositoryOpt.get().getId(),
+				secretOpt.get().getId());
 	}
 }

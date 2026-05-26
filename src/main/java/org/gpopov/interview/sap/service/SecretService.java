@@ -1,37 +1,38 @@
 package org.gpopov.interview.sap.service;
 
-import org.gpopov.interview.sap.dto.Secret;
-import org.gpopov.interview.sap.dto.ValidationResponse;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.gpopov.interview.sap.dto.Secret;
+import org.gpopov.interview.sap.dto.ValidationResponse;
 
 
 public interface SecretService {
 
     /**
+     * Create secret
      * 
-     * @param repositoryId
-     * @param request
-     * @return
+     * @param secret
+     * @return created secret
      */
-    public Secret create(Secret request);
+    public Secret create(Secret secret);
 
     /**
+     * Delete secret by id
      * 
      * @param secretId
      */
     public void delete(UUID secretId);
     
     /**
+     * List existing secrets
      * 
-     * @param repositoryId
-     * @param request
-     * @return
+     * @return all secrets
      */
     public List<Secret> listAll();
     
     /**
+     * Find secret by id
      * 
      * @param secretId
      * @return secret
@@ -39,9 +40,10 @@ public interface SecretService {
     public Secret findById(UUID secretId);
 
     /**
+     * Validate secret against repository
      * 
      * @param secretId
-     * @param request
+     * @param repositoryId
      * @return
      */
     public ValidationResponse validate(UUID secretId, UUID repositoryId);

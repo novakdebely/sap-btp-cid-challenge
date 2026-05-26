@@ -9,11 +9,13 @@ import org.gpopov.interview.sap.BaseTest;
 import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.dto.SecretType;
 import org.gpopov.interview.sap.repository.RepositoryRepo;
+import org.gpopov.interview.sap.repository.RepositorySecretRepo;
 import org.gpopov.interview.sap.repository.SecretRepo;
 import org.gpopov.interview.sap.service.impl.SecretServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 public class SecretServiceImplTest extends BaseTest {
@@ -23,6 +25,9 @@ public class SecretServiceImplTest extends BaseTest {
 	
 	@Autowired
     private RepositoryRepo repositoryRepo;
+	
+	@Autowired
+	private RepositorySecretRepo repositorySecretRepo;
 
 	@Autowired
 	private RestClient restClient;
@@ -34,7 +39,7 @@ public class SecretServiceImplTest extends BaseTest {
     	secretRepo.deleteAll();
     	repositoryRepo.deleteAll();
     	
-    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, restClient);
+    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, repositorySecretRepo, restClient);
     }
 
 	@Test
@@ -55,6 +60,7 @@ public class SecretServiceImplTest extends BaseTest {
 	}
 
 	@Test
+	@Transactional
 	public void testDeleteRepository() {
 		String name = "Delete Secret ";
 		String value = "ThisIsTheValueOFBearerToken";

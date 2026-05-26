@@ -1,25 +1,25 @@
 package org.gpopov.interview.sap.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.gpopov.interview.sap.BaseTest;
 import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.RepositoryDetails;
 import org.gpopov.interview.sap.dto.Secret;
+import org.gpopov.interview.sap.dto.SecretType;
 import org.gpopov.interview.sap.repository.RepositoryRepo;
+import org.gpopov.interview.sap.repository.RepositorySecretRepo;
 import org.gpopov.interview.sap.repository.SecretRepo;
 import org.gpopov.interview.sap.service.impl.RepositoryServiceImpl;
 import org.gpopov.interview.sap.service.impl.SecretServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 
@@ -32,6 +32,9 @@ public class RepositoryServiceTest extends BaseTest {
     private SecretRepo secretRepo;
 	
 	@Autowired
+	private RepositorySecretRepo repositorySecretRepo;
+	
+	@Autowired
 	private RestClient restClient;
 	
     private RepositoryService repositoryService;
@@ -42,8 +45,8 @@ public class RepositoryServiceTest extends BaseTest {
     	repositoryRepo.deleteAll();
     	secretRepo.deleteAll();
     	
-    	repositoryService = new RepositoryServiceImpl(repositoryRepo, secretRepo);
-    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, restClient);
+    	repositoryService = new RepositoryServiceImpl(repositoryRepo, secretRepo, repositorySecretRepo);
+    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, repositorySecretRepo, restClient);
     }
 	
 	@Test
@@ -66,6 +69,7 @@ public class RepositoryServiceTest extends BaseTest {
 	}
 	
 	@Test
+	@Transactional
 	public void testDeleteRepositories() {
 		String url = "http://delete.repository/test";
 		String name = "Delete Repository ";
@@ -96,8 +100,8 @@ public class RepositoryServiceTest extends BaseTest {
 		assertEquals(listRepositories.get(2).getId(), newListRepositories.get(1).getId());
 	}
 	
-	@Disabled
 	@Test
+	@Transactional
 	public void testAssignSecretToRepository() {
 		// Create repository
 		String repoUrl = "http://assign.secrets.to.repository/test";
@@ -124,6 +128,7 @@ public class RepositoryServiceTest extends BaseTest {
 		for (int i = 1; i <= 3; i++) {
 			Secret secret = new Secret();
 			secret.setName(secretName +  i);
+			secret.setType(SecretType.BEARER);
 			secret.setValue(secretValue + i);
 			
 			listSecrets.add(secretService.create(secret));

@@ -1,6 +1,7 @@
 package org.gpopov.interview.sap.util;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,14 +36,14 @@ public class EntityToModelConverter {
      * @param @RepositoryEntity entity
      * @return @Repository instance
 	 */
-    public static RepositoryDetails toRepositoryDetails(RepositoryEntity entity) {
+    public static RepositoryDetails toRepositoryDetails(RepositoryEntity entity, List<SecretEntity> secrets) {
     	RepositoryDetails r = new RepositoryDetails();
         r.setId(entity.getId());
         r.setUrl(entity.getUrl());
         r.setName(entity.getName());
         r.setDescription(entity.getDescription());
         
-        r.setSecrets(Optional.ofNullable(entity.getSecrets()).orElse(Collections.emptySet()).stream()
+        r.setSecrets(Optional.ofNullable(secrets).orElse(Collections.emptyList()).stream()
         		.map(EntityToModelConverter::toSecret)
         		.collect(Collectors.toList()));
         

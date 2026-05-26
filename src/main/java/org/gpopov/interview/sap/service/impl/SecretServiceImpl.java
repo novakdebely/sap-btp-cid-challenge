@@ -1,7 +1,10 @@
 package org.gpopov.interview.sap.service.impl;
 
-import jakarta.persistence.EntityNotFoundException;
-import lombok.AllArgsConstructor;
+import java.net.URI;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.gpopov.interview.sap.dto.Secret;
 import org.gpopov.interview.sap.dto.SecretType;
@@ -9,6 +12,7 @@ import org.gpopov.interview.sap.dto.ValidationResponse;
 import org.gpopov.interview.sap.model.RepositoryEntity;
 import org.gpopov.interview.sap.model.SecretEntity;
 import org.gpopov.interview.sap.repository.RepositoryRepo;
+import org.gpopov.interview.sap.repository.RepositorySecretRepo;
 import org.gpopov.interview.sap.repository.SecretRepo;
 import org.gpopov.interview.sap.service.SecretService;
 import org.gpopov.interview.sap.util.EntityToModelConverter;
@@ -18,12 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
-import java.net.URI;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -37,6 +37,9 @@ public class SecretServiceImpl implements SecretService {
 	
 	@Autowired
     private RepositoryRepo repositoryRepo;
+	
+	@Autowired
+	private RepositorySecretRepo repositorySecretRepo;
 	
 	@Autowired
 	private RestClient restClient;
@@ -61,8 +64,7 @@ public class SecretServiceImpl implements SecretService {
         }
         SecretEntity entity = secretEntityOpt.get();
         // Remove secrets from repositories
-        Set<RepositoryEntity> repositorites = entity.getRepositories();
-        repositorites.stream().forEach(repo -> repo.removeSecret(entity));
+        repositorySecretRepo.deleteAllBySecretId(entity.getId());
         
         secretRepo.deleteById(secretId);
     }
