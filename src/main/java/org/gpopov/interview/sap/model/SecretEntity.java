@@ -31,6 +31,10 @@ public class SecretEntity {
     @NotBlank
     @Column(nullable = false)
     private String name;
+    
+    @NotBlank
+    @Column(nullable = false)
+    private String type;
 
     @NotBlank
     @Column(name = "secret_value", nullable = false)

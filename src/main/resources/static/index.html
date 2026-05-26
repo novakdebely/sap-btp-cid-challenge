@@ -280,7 +280,8 @@
               <tr>
 				<th class="hide-column">ID</th>
 				<th>Name</th>
-				<th>Value</th>
+				<th>Type</th>
+				<th>Value (encoded)</th>
 			</tr>
             </thead>
             <tbody>
@@ -289,6 +290,7 @@
                   ng-click="toggleSelSecret(s)">
                 <td class="hide-column">{{s.id}}</td>
                 <td>{{s.name}}</td>
+				<td>{{s.type}}</td>
                 <td>{{s.value}}</td>
               </tr>
               <tr ng-if="secrets.length === 0">
@@ -379,6 +381,13 @@
         <label>Name</label>
         <input type="text" ng-model="form.name" placeholder="Secret name">
       </div>
+	  <div class="form-group">
+	    <label>Type</label>
+		<select ng-model="form.type">
+		  <option value="BEARER">Bearer</option>
+		  <option value="TOKEN">Token</option>
+		</select>
+	  </div>
       <div class="form-group">
         <label>Value</label>
         <input type="text" ng-model="form.value" placeholder="Secret value">
@@ -577,12 +586,12 @@
       }
 
       $scope.openCreateSecret = function() {
-        $scope.form = { name: '', value: '' };
+        $scope.form = { name: '',  type: '', value: '' };
         $scope.dlg.createSecret = true;
       };
 
       $scope.createSecret = function() {
-        var payload = { name: $scope.form.name, value: $scope.form.value };
+        var payload = { name: $scope.form.name, type: $scope.form.type, value: $scope.form.value };
         $http.post('/api/v1/secrets', payload).then(function() {
           $scope.closeAll();
           setStatus('Secret created.', 'ok');

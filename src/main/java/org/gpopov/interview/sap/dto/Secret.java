@@ -13,6 +13,8 @@ public class Secret {
     @NotBlank(message = "Name must not be blank")
     private String name;
 
+    private SecretType type;
+
     @NotBlank(message = "Value must not be blank")
 	private String value;
 }

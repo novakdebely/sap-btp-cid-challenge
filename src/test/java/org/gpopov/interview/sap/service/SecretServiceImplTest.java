@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.gpopov.interview.sap.BaseTest;
 import org.gpopov.interview.sap.dto.Secret;
+import org.gpopov.interview.sap.dto.SecretType;
 import org.gpopov.interview.sap.repository.RepositoryRepo;
 import org.gpopov.interview.sap.repository.SecretRepo;
 import org.gpopov.interview.sap.service.impl.SecretServiceImpl;
@@ -43,13 +44,14 @@ public class SecretServiceImplTest extends BaseTest {
 		
 		Secret secret = new Secret();
 		secret.setName(name);
+		secret.setType(SecretType.BEARER);
 		secret.setValue(value);
 		
 		Secret newSecret = secretService.create(secret);
 		
 		assertNotNull(newSecret.getId());
 		assertEquals(name, newSecret.getName());
-		assertEquals(value, newSecret.getValue());
+		assertEquals(SecretType.BEARER, newSecret.getType());
 	}
 
 	@Test
@@ -61,6 +63,7 @@ public class SecretServiceImplTest extends BaseTest {
 		for (int i = 1; i <= 3; i++) {
 			Secret secret = new Secret();
 			secret.setName(name +  i);
+			secret.setType(SecretType.TOKEN);
 			secret.setValue(value + i);
 			
 			Secret newSecret = secretService.create(secret);

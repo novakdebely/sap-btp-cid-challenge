@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.RepositoryDetails;
 import org.gpopov.interview.sap.dto.Secret;
+import org.gpopov.interview.sap.dto.SecretType;
 import org.gpopov.interview.sap.model.RepositoryEntity;
 import org.gpopov.interview.sap.model.SecretEntity;
 
@@ -58,6 +59,7 @@ public class EntityToModelConverter {
     	Secret r = new Secret();
         r.setId(entity.getId());
         r.setName(entity.getName());
+        r.setType(SecretType.valueOf(entity.getType()));
         r.setValue(entity.getSecretValue());
         return r;
     }

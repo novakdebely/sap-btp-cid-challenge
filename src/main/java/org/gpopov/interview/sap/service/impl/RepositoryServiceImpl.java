@@ -69,9 +69,15 @@ public class RepositoryServiceImpl implements RepositoryService{
 	@Override
     @Transactional
     public void delete(UUID id) {
-        if (!repositoryRepo.existsById(id)) {
+        Optional<RepositoryEntity> repositoryEntityOpt = repositoryRepo.findById(id);
+        if (repositoryEntityOpt.isEmpty()) {
             throw new EntityNotFoundException("Repository not found: " + id);
         }
+        RepositoryEntity entity = repositoryEntityOpt.get();
+        // Remove assigned secrets
+        Set<SecretEntity> secrets = entity.getSecrets();
+        secrets.stream().forEach(secret -> entity.removeSecret(secret));
+
         repositoryRepo.deleteById(id);
     }
 
