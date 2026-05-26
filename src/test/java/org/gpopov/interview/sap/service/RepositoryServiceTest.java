@@ -20,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
 
 public class RepositoryServiceTest extends BaseTest {
@@ -34,19 +33,17 @@ public class RepositoryServiceTest extends BaseTest {
 	@Autowired
 	private RepositorySecretRepo repositorySecretRepo;
 	
-	@Autowired
-	private RestClient restClient;
-	
     private RepositoryService repositoryService;
     private SecretService secretService;
     
     @BeforeEach
     public void setup() {
+    	repositorySecretRepo.deleteAll();
     	repositoryRepo.deleteAll();
     	secretRepo.deleteAll();
     	
     	repositoryService = new RepositoryServiceImpl(repositoryRepo, secretRepo, repositorySecretRepo);
-    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, repositorySecretRepo, restClient);
+    	secretService = new SecretServiceImpl(secretRepo, repositoryRepo, repositorySecretRepo);
     }
 	
 	@Test

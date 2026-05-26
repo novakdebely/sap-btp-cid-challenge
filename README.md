@@ -61,6 +61,7 @@ Open **http://localhost:8080** in your browser for the graphical interface.
 | `GET`    | `/api/v1/secrets`                                      | List secrets |
 | `GET`    | `/api/v1/secrets/{id}`                                 | Get custom secret |
 | `DELETE` | `/api/v1/secrets/{id}`                                 | Delete a secret |
+| `POST`   | `/api/v1/secrets/validate`                             | Validate secret's value |
 
 **Add secret – request body**
 ```json
@@ -70,3 +71,9 @@ Open **http://localhost:8080** in your browser for the graphical interface.
 Secret types: `TOKEN`, `BEARER`
 
 > Secret values are stored as *Base64 encoded string** and can be retrieved.
+
+ValidateRequest
+**Validate secret – request body**
+```json
+{ "secret_id": "8b440756-0cf2-470c-af11-34b17cdb4a8b", "secret_value": "ghp_..." }
+```

@@ -15,14 +15,10 @@ public class ValidationResponse {
         return r;
     }
 
-    public static ValidationResponse invalid(String errorMessage) {
+    public static ValidationResponse invalid() {
         ValidationResponse r = new ValidationResponse();
         r.valid = false;
-        r.message = errorMessage == null? "Secret is invalid":errorMessage;
+        r.message = "Secret is invalid";
         return r;
-    }
-    
-    public boolean isValid() {
-    	return this.valid;
     }
 }

@@ -6,9 +6,7 @@ import java.util.UUID;
 import org.gpopov.interview.sap.dto.Repository;
 import org.gpopov.interview.sap.dto.RepositoryDetails;
 import org.gpopov.interview.sap.dto.SecretAssigment;
-import org.gpopov.interview.sap.dto.ValidationResponse;
 import org.gpopov.interview.sap.service.RepositoryService;
-import org.gpopov.interview.sap.service.SecretService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +28,6 @@ public class RepositoryController {
 
 	@Autowired
 	private RepositoryService repositoryService;
-	
-	@Autowired
-	private SecretService secretService;
 
 	/**
      * Find repository by id
@@ -80,17 +75,10 @@ public class RepositoryController {
 	/**
      * Assign secret to repository
      * 
-     * @param repoId
-     * @param secretId
+     * @param SecretAssigment instance
      */
 	@PostMapping("/assign")
-	public ResponseEntity<Void> addSecretToRepository(@Valid @RequestBody SecretAssigment assignment) {
-		ValidationResponse valdiationResult = secretService.validate(assignment.getSecretId(), assignment.getRepoId());
-		if (!valdiationResult.isValid()) {
-			return ResponseEntity
-					.status(HttpStatus.BAD_REQUEST)
-					.build();
-		}
+	public ResponseEntity<Void> asignSecretToRepository(@Valid @RequestBody SecretAssigment assignment) {
 		repositoryService.assignSecretToRepository(assignment.getRepoId(), assignment.getSecretId());
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}

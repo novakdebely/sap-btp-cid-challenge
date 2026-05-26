@@ -38,13 +38,13 @@ public interface SecretService {
      * @return secret
      */
     public Secret findById(UUID secretId);
-
+    
     /**
-     * Validate secret against repository
+     * Validate secret value for given secret
      * 
      * @param secretId
-     * @param repositoryId
-     * @return
+     * @param secretValue
+     * @return errorMessage if secret is not valid and null otherwise
      */
-    public ValidationResponse validate(UUID secretId, UUID repositoryId);
+    public ValidationResponse validate(UUID secretId, String secretValue);
 }

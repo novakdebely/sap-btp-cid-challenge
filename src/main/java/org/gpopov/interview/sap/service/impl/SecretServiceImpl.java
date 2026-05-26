@@ -1,15 +1,12 @@
 package org.gpopov.interview.sap.service.impl;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.gpopov.interview.sap.dto.Secret;
-import org.gpopov.interview.sap.dto.SecretType;
 import org.gpopov.interview.sap.dto.ValidationResponse;
-import org.gpopov.interview.sap.model.RepositoryEntity;
 import org.gpopov.interview.sap.model.SecretEntity;
 import org.gpopov.interview.sap.repository.RepositoryRepo;
 import org.gpopov.interview.sap.repository.RepositorySecretRepo;
@@ -20,7 +17,6 @@ import org.gpopov.interview.sap.util.SecretUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
@@ -40,9 +36,6 @@ public class SecretServiceImpl implements SecretService {
 	
 	@Autowired
 	private RepositorySecretRepo repositorySecretRepo;
-	
-	@Autowired
-	private RestClient restClient;
 
 	@Override
     @Transactional
@@ -68,13 +61,9 @@ public class SecretServiceImpl implements SecretService {
         
         secretRepo.deleteById(secretId);
     }
-    /**
-     * 
-     * @param secretId
-     * @return s
-     * @Override
-    @Transactional(readOnly = true)ecret
-     */
+
+    @Override
+    @Transactional(readOnly = true)
     public Secret findById(UUID id) {
     	Optional<SecretEntity> secretEntityOpt = secretRepo.findById(id);
     	if (secretEntityOpt.isEmpty()) {
@@ -93,32 +82,17 @@ public class SecretServiceImpl implements SecretService {
 
     @Override
     @Transactional(readOnly = true)
-    public ValidationResponse validate(UUID secretId, UUID repositoryId) {
+    public ValidationResponse validate(UUID secretId, String secretValue) {
     	Optional<SecretEntity> secretEntityOpt = secretRepo.findById(secretId);
     	if (secretEntityOpt.isEmpty()) {
             throw new EntityNotFoundException("Secret not found: " + secretId);
         }
-    	Optional<RepositoryEntity> repositoryEntityOpt = repositoryRepo.findById(repositoryId);
-    	if (repositoryEntityOpt.isEmpty()) {
-            throw new EntityNotFoundException("Repository not found: " + repositoryId);
-        }
-    	SecretEntity secret = secretEntityOpt.get();
-    	String secretTypeHeader = SecretType.TOKEN.name().equals(secret.getType())? HEADER_PREFIX_TOKEN: HEADER_PREFIX_BEARER;
-	    String errorMessage = restClient.get()
-	    		.uri(URI.create(repositoryEntityOpt.get().getUrl()))
-	    	    .header("Authorization", secretTypeHeader + SecretUtil.decode(secretEntityOpt.get().getSecretValue()))
-	    	    .exchange((req, res) -> {
-	                try {
-	                    if (res.getStatusCode().is2xxSuccessful()) {
-	                        return null;
-	                    } else {
-	                    	return "Validation failed: " + res.getBody().toString();
-	                    }
-	                } catch (Exception e) {
-	                    e.printStackTrace();
-	                    return "Validation failed: " + e.getMessage();
-	                }
-	            });
-	    return errorMessage == null? ValidationResponse.valid(): ValidationResponse.invalid(errorMessage);
+    	
+    	String encodedSecret = SecretUtil.encode(secretValue);
+    	if (encodedSecret.equals(secretEntityOpt.get().getSecretValue())) {
+    		return ValidationResponse.valid();
+    	} else {
+    		return ValidationResponse.invalid();
+    	}
     }
 }
